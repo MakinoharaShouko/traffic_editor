@@ -1128,6 +1128,44 @@ QTableWidgetItem* Editor::create_table_item(
   return item;
 }
 
+void Editor::door_type_drop_down_row(
+  const int row_idx,
+  const QString& value
+)
+{
+  QTableWidgetItem* label_item = new QTableWidgetItem("type");
+  label_item->setFlags(Qt::NoItemFlags);
+
+  QComboBox* door_type_box = new QComboBox;
+  door_type_box->setStyleSheet(
+    "QComboBox { background-color: white; }"
+    "QComboBox QAbstractItemView { background-color: white; }");
+  door_type_box->addItem("<undefined>", QVariant(0));
+  door_type_box->addItem("hinged", QVariant(1));
+  door_type_box->addItem("double_hinged", QVariant(2));
+  door_type_box->addItem("sliding", QVariant(3));
+  door_type_box->addItem("double_sliding", QVariant(4));
+  door_type_box->setCurrentText(value);
+  connect(
+    door_type_box,
+    &QComboBox::currentTextChanged,
+    [this](const QString& text)
+    {
+      for (auto& e : project.building.levels[level_idx].edges)
+      {
+        if (!e.selected)
+          continue;
+        e.set_param("type", text.toStdString());
+        create_scene();
+        setWindowModified(true);
+        break;  // stop after finding the first one
+      }
+    });
+
+  property_editor->setItem(row_idx, 0, label_item);
+  property_editor->setCellWidget(row_idx, 1, door_type_box);
+}
+
 void Editor::property_editor_set_row(
   const int row_idx,
   const QString& label,
@@ -1331,11 +1369,14 @@ void Editor::populate_property_editor(const Edge& edge)
   int row = 8;
   for (const auto& param : edge.params)
   {
-    property_editor_set_row(
-      row,
-      QString::fromStdString(param.first),
-      param.second.to_qstring(),
-      true);
+    if (param.first == "type")
+      door_type_drop_down_row(row, param.second.to_qstring());
+    else
+      property_editor_set_row(
+        row,
+        QString::fromStdString(param.first),
+        param.second.to_qstring(),
+        true);
     row++;
   }
 

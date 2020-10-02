@@ -209,6 +209,9 @@ private:
   QTableWidgetItem* create_table_item(const QString& str,
     bool editable = false);
   void property_editor_cell_changed(int row, int column);
+  void door_type_drop_down_row(
+    const int row_idx,
+    const QString& value);
   void property_editor_set_row(
     const int row_idx,
     const QString& label,
