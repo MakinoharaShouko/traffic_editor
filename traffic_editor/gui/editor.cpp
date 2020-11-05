@@ -386,6 +386,7 @@ Editor::Editor()
   create_tool_button(TOOL_ADD_ROI, ":icons/roi.svg", "Add region of interest");
   create_tool_button(TOOL_EDIT_POLYGON, "", "Edit Polygon");
   create_tool_button(TOOL_ADD_HUMAN_LANE, "", "Add Human Lane with width");
+  create_tool_button(TOOL_UNDO, "", "Undo");
 
   connect(
     tool_button_group,
@@ -876,6 +877,7 @@ void Editor::mouse_event(const MouseType t, QMouseEvent* e)
     case TOOL_ADD_FIDUCIAL: mouse_add_fiducial(t, e, p); break;
     case TOOL_ADD_ROI:      mouse_add_roi(t, e, p); break;
     case TOOL_ADD_HUMAN_LANE: mouse_add_human_lane(t, e, p); break;
+    case TOOL_UNDO:         mouse_undo(); break;
 
     default: break;
   }
@@ -1659,7 +1661,15 @@ void Editor::mouse_add_vertex(
   if (t == MOUSE_PRESS)
   {
     if (mode == MODE_BUILDING || mode == MODE_TRAFFIC)
-      project.building.add_vertex(level_idx, p.x(), p.y());
+    {
+      double x = p.x();
+      double y = p.y();
+      project.building.add_vertex(level_idx, x, y);
+      OperationHistory opHist = VertexHistory(ADD_VERTEX, level_idx);
+      Vertex v = Vertex(x, y);
+      opHist.setVertex(v);
+      operation_history.push(opHist);
+    }
     else if (mode == MODE_SCENARIO)
     {
       if (project.scenario_idx < 0)
@@ -2253,6 +2263,28 @@ void Editor::mouse_edit_polygon(
       QPolygonF polygon = mouse_motion_polygon->polygon();
       polygon[mouse_edge_drag_polygon.movable_vertex] = QPointF(p.x(), p.y());
       mouse_motion_polygon->setPolygon(polygon);
+    }
+  }
+}
+
+void Editor::mouse_undo() {
+  if (!operation_history.empty()) {
+    OperationHistory opHist = operation_history.top();
+    operation_history.pop();
+    switch (opHist.type)
+    {
+    case ADD_VERTEX:
+      Vertex v = opHist.getVertex();
+      vector<Vertex>& vertices = project.building.levels[opHist._level].vertices;
+      for (int i = 0; i < vertices.size(); i ++) {
+        if (vertices[i].x == v.x && vertices[i].y == v.y) {
+          
+        }
+      }
+      break;
+    
+    default:
+      break;
     }
   }
 }

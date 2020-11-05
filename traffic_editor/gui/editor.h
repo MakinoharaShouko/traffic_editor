@@ -33,6 +33,7 @@
 #include "project.h"
 #include "traffic_editor/editor_model.h"
 #include "editor_mode_id.h"
+#include "operation_history.h"
 
 #ifdef HAS_IGNITION_PLUGIN
 #include "sim_thread.h"
@@ -125,6 +126,7 @@ private:
     TOOL_ADD_ROI,
     TOOL_ADD_HOLE,
     TOOL_ADD_HUMAN_LANE,
+    TOOL_UNDO,
   } tool_id = TOOL_SELECT;
 
   std::map<ToolId, QAction*> tools;
@@ -259,6 +261,8 @@ private:
   void scene_update_timer_timeout();
 #endif
 
+  std::stack<OperationHistory> operation_history;
+
   std::vector<EditorModel> editor_models;
   EditorModel* mouse_motion_editor_model = nullptr;
   void load_model_names();
@@ -327,6 +331,7 @@ private:
   void mouse_add_hole(const MouseType t, QMouseEvent* e, const QPointF& p);
   void mouse_add_roi(const MouseType t, QMouseEvent* e, const QPointF& p);
   void mouse_edit_polygon(const MouseType t, QMouseEvent* e, const QPointF& p);
+  void mouse_undo();
 
   void mouse_add_human_lane(const MouseType t, QMouseEvent* e,
     const QPointF& p);
