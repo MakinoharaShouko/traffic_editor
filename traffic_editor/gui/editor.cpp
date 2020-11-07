@@ -1665,9 +1665,8 @@ void Editor::mouse_add_vertex(
       double x = p.x();
       double y = p.y();
       project.building.add_vertex(level_idx, x, y);
-      OperationHistory opHist = VertexHistory(ADD_VERTEX, level_idx);
       Vertex v = Vertex(x, y);
-      opHist.setVertex(v);
+      VertexHistory opHist(ADD_VERTEX, level_idx, v);
       operation_history.push(opHist);
     }
     else if (mode == MODE_SCENARIO)
@@ -2271,19 +2270,62 @@ void Editor::mouse_undo() {
   if (!operation_history.empty()) {
     OperationHistory opHist = operation_history.top();
     operation_history.pop();
-    switch (opHist.type)
+    switch (opHist._type)
     {
     case ADD_VERTEX:
       Vertex v = opHist.getVertex();
-      vector<Vertex>& vertices = project.building.levels[opHist._level].vertices;
-      for (int i = 0; i < vertices.size(); i ++) {
+      std::vector<Vertex>& vertices = project.building.levels[opHist._level].vertices;
+      std::vector<Edge>& edges = project.building.levels[opHist._level].edges;
+      std::vector<Polygon>& polygons = project.building.levels[opHist._level].polygons;
+      for (int i = 0; i < static_cast<int>(vertices.size()); i ++) {
         if (vertices[i].x == v.x && vertices[i].y == v.y) {
-          
+          bool canRemove = true;
+          for (auto edge : edges)
+          {
+            // cannot remove a vertex on an edge
+            if (edge.start_idx == i || edge.end_idx == i)
+            {
+              canRemove = false;
+              break;
+            }
+          }
+          if (!canRemove)
+            continue;
+          for (auto polygon : polygons)
+          {
+            // cannot remove a vertex on a polygon
+            if (std::find(polygon.vertices.begin(), polygon.vertices.end(), i)
+              != polygon.vertices.end())
+              {
+                canRemove = false;
+                break;
+              }
+          }
+          if (!canRemove)
+            continue;
+          vertices.erase(vertices.begin() + i);
+          // now go through all edges and polygons to decrement any larger indices
+          for (Edge& edge : edges)
+          {
+            if (edge.start_idx > i)
+              edge.start_idx--;
+            if (edge.end_idx > i)
+              edge.end_idx--;
+          }
+
+          for (Polygon& polygon : polygons)
+          {
+            for (int j = 0; j < static_cast<int>(polygon.vertices.size()); j++)
+            {
+              if (polygon.vertices[j] > i)
+                polygon.vertices[j]--;
+            }
+          }
+          break;
         }
       }
-      break;
-    
-    default:
+      clear_property_editor();
+      setWindowModified(true);
       break;
     }
   }

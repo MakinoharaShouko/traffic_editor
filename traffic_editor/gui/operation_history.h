@@ -7,10 +7,7 @@
 #include "traffic_editor/fiducial.h"
 
 enum Operation {
-    ADD_VERTEX,
-    ADD_LANE,
-    ADD_POLYGON,
-    ADD_FIDUCIAL,
+    ADD_VERTEX = 1,
 };
 
 class OperationHistory {
@@ -18,19 +15,22 @@ public:
     Operation _type;
     int _level;
 
-    OperationHistory(Operation type, int level)
+    OperationHistory(Operation type, int level);
 
-    // Set method of the base history class
     // By default does nothing
     virtual void setVertex(Vertex v) {};
-
-    virtual Fiducial getFiducial();
-    virtual Vertex getVertex();
+    virtual Fiducial getFiducial() {};
+    virtual Vertex getVertex() {};
 };
 
-class VertexHistory extends OperationHistory {
+class VertexHistory : public OperationHistory {
 public:
     Vertex _v;
-}
+
+    VertexHistory(Operation type, int level, Vertex v);
+
+    virtual void setVertex(Vertex v);
+    virtual Vertex getVertex();
+};
 
 #endif

@@ -21,6 +21,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <stack>
 
 #include <QGraphicsItem>
 #include <QGraphicsEllipseItem>

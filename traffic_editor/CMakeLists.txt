@@ -45,6 +45,7 @@ set(traffic_editor_sources
   gui/building_level_table.cpp
   gui/edge.cpp
   gui/editor.cpp
+  gui/operation_history.cpp
   gui/editor_model.cpp
   gui/fiducial.cpp
   gui/layer.cpp
